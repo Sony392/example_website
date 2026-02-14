@@ -1,0 +1,498 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Coding Language Usage — Interactive Report</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+    :root{
+      /* Black & White theme */
+      --bg: #ffffff;    /* page background: white */
+      --card: #ffffff;  /* card background: white */
+      --accent: #000000;/* primary text / headings: black */
+      --gold: #000000;  /* used where accents existed, now black */
+      --muted: #000000; /* normal text: black */
+      --glass: rgba(0,0,0,0.04);
+      --radius:14px;
+      --gap:16px;
+    }
+    html,body{height:100%;margin:0;font-family:"Cinzel",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--muted);-webkit-font-smoothing:antialiased}
+    /* main container: visible by default */
+    .wrap{max-width:1000px;margin:36px auto;padding:20px; transform:none; opacity:1; transition:none;}
+
+    .welcome{ text-align:center; font-size:1.05rem; color:var(--muted); margin-bottom:12px; }
+    .hero{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+    .title{color:var(--accent);margin:0;font-size:1.4rem}
+    .subtitle{margin:6px 0 0 0;color:rgba(199,213,232,0.85);font-size:.95rem}
+    .controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  input[type="text"], select, button{padding:8px 10px;border-radius:10px;border:1px solid rgba(0,0,0,0.08);background:transparent;color:var(--muted);transition:transform .18s ease, box-shadow .18s ease}
+    button{cursor:pointer}
+  .card{background:var(--card);border-radius:var(--radius);padding:18px;box-shadow:0 8px 24px rgba(0,0,0,0.06)}
+    .grid{display:grid;grid-template-columns:1fr 340px;gap:var(--gap);margin-top:18px}
+    @media (max-width:980px){ .grid{grid-template-columns:1fr} .hero{flex-direction:column;align-items:flex-start} }
+
+    /* bars */
+    .bars{display:flex;flex-direction:column;gap:12px}
+    .row{
+      display:flex;align-items:center;gap:12px;padding:10px;border-radius:12px;background:var(--glass);
+      transform:translateY(6px);opacity:0;
+      transition:transform .35s cubic-bezier(.2,.9,.3,1), opacity .35s ease, box-shadow .2s ease;
+    }
+    .row.visible{ transform:none; opacity:1; }
+    .row:hover{ box-shadow: 0 10px 30px rgba(0,0,0,0.5); transform:translateY(-6px); }
+
+    .label{width:150px;font-weight:700;color:var(--accent);cursor:pointer}
+    .bar-wrap{flex:1;background:transparent;padding:6px;border-radius:10px;overflow:hidden}
+    .bar{
+      height:28px;border-radius:8px;background:var(--accent);
+      width:0%; transition:width .9s cubic-bezier(.2,.9,.3,1);
+    }
+    .value{width:72px;text-align:right;font-weight:700;color:var(--muted)}
+    .row .actions{display:flex;gap:8px;align-items:center}
+
+    /* aside / table */
+    .aside{padding-left:8px}
+    table{width:100%;border-collapse:collapse;margin-top:12px}
+  td,th{padding:8px 6px;border-bottom:1px dashed rgba(0,0,0,0.06);font-size:.95rem;color:var(--muted)}
+  .compare-panel{margin-top:12px;padding:10px;border-radius:10px;background:transparent}
+  .detail{margin-top:12px;padding:12px;border-radius:10px;background:transparent}
+
+  .badge{display:inline-block;padding:6px 8px;border-radius:999px;background:var(--accent);color:#ffffff;font-weight:700;font-size:.9rem}
+  .note{font-size:.9rem;color:var(--muted);margin-top:8px}
+
+    /* subtle focus */
+  button:focus,input:focus,select:focus{outline:3px solid rgba(0,0,0,0.12);outline-offset:3px;border-radius:8px}
+  </style>
+</head>
+<body>
+<main class="wrap">
+  <!-- welcome removed; page shows immediately -->
+
+  <header class="hero">
+    <div>
+      <h1 class="title">Coding Language Usage</h1>
+    </div>
+
+    <div class="controls" aria-hidden="false">
+      <select id="sort" aria-label="Sort languages">
+        <option value="usage">Usage ↓</option>
+        <option value="name">Name A→Z</option>
+      </select>
+
+      <button id="toggleLabels">Counts</button>
+
+      <input id="search" type="text" placeholder="Search…" aria-label="Search languages">
+
+      <!-- new: compare controls -->
+      <label style="margin-left:8px;display:flex;gap:6px;align-items:center">
+        Compare:
+        <select id="compareA" aria-label="Compare language A" style="margin-left:6px"></select>
+        <select id="compareB" aria-label="Compare language B" style="margin-left:6px"></select>
+        <button id="compareBtn" style="margin-left:6px">Compare</button>
+      </label>
+    </div>
+  </header>
+
+  <section class="grid">
+    <div class="card">
+      <div id="chart" class="bars" role="list" aria-label="Language usage chart"></div>
+
+    <!-- removed complex compare UI and placeholder -->
+    <div id="comparePanel" class="compare-panel" style="display:none">
+      <!-- compare output injected here -->
+    </div>
+
+    <div id="detail" class="detail" style="display:none"></div>
+    </div>
+
+    <aside class="card aside" aria-labelledby="legend">
+      <h3 id="legend" style="margin:0 0 10px 0;color:var(--accent)">Data</h3>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button id="resetBtn">Reset</button>
+      </div>
+
+      <table id="dataTable" aria-describedby="legend" style="margin-top:12px">
+        <thead><tr><th>Language</th><th>Usage</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </aside>
+  </section>
+</main>
+
+<!-- replace script with simplified animated version (no compare/export complexity) -->
+<script>
+(function(){
+  // initial seed data (used until API returns)
+  const data = [
+    {lang:'Python', value:31},
+    {lang:'JavaScript', value:28},
+    {lang:'Java', value:15},
+    {lang:'C#', value:8},
+    {lang:'C++', value:6},
+    {lang:'Go', value:5},
+    {lang:'Rust', value:4},
+    {lang:'PHP', value:3}
+  ];
+
+  const meta = {
+    // add short tag list for comparison-driven prose
+    'Python': {
+      desc:'General-purpose; strong in data science, scripting and automation.',
+      site:'https://www.python.org',
+      tags:['data-science','scripting','rapid-prototyping','beginners','web-backend']
+    },
+    'JavaScript': {
+      desc:'Ubiquitous for web front-end and increasingly used on the server.',
+      site:'https://developer.mozilla.org/en-US/docs/Web/JavaScript',
+      tags:['web','frontend','backend','ubiquity','fullstack']
+    },
+    'Java': {
+      desc:'Mature language for enterprise systems and Android.',
+      site:'https://www.oracle.com/java/',
+      tags:['enterprise','mobile','static-typing','performance']
+    },
+    'C#': {
+      desc:'Microsoft ecosystem language; common in desktop, server and game development (Unity).',
+      site:'https://docs.microsoft.com/dotnet/csharp/',
+      tags:['enterprise','game-dev','static-typing','windows']
+    },
+    'C++': {
+      desc:'Low-level, high-performance language used for systems and games.',
+      site:'https://isocpp.org/',
+      tags:['performance','systems','games','low-level']
+    },
+    'Go': {
+      desc:'Simple, compiled language for networked services with strong concurrency support.',
+      site:'https://golang.org/',
+      tags:['concurrency','networking','simplicity','cloud']
+    },
+    'Rust': {
+      desc:'Memory-safe systems language with strong emphasis on safety and performance.',
+      site:'https://www.rust-lang.org/',
+      tags:['safety','systems','performance','modern-tooling']
+    },
+    'PHP': {
+      desc:'Server-side language commonly used in web applications and CMSes.',
+      site:'https://www.php.net/',
+      tags:['web','cms','legacy','scripting']
+    }
+  };
+
+  let rows = data.slice();
+  let showPercent = true;
+
+  const chart = document.getElementById('chart');
+  const tableBody = document.querySelector('#dataTable tbody');
+  const sortSelect = document.getElementById('sort');
+  const toggleLabels = document.getElementById('toggleLabels');
+  const resetBtn = document.getElementById('resetBtn');
+  const searchInput = document.getElementById('search');
+  const detail = document.getElementById('detail');
+  const compareA = document.getElementById('compareA');
+  const compareB = document.getElementById('compareB');
+  const compareBtn = document.getElementById('compareBtn');
+  const comparePanel = document.getElementById('comparePanel');
+
+  // UI map for in-place updates
+  const uiMap = new Map();
+
+  function totalValue(list){ return list.reduce((s,i)=>s+i.value,0); }
+
+  // build DOM once (or after re-render when order/filters change)
+  function render(list){
+    const total = totalValue(list);
+    chart.innerHTML = '';
+    uiMap.clear();
+    tableBody.innerHTML = '';
+
+    list.forEach((item, idx)=>{
+      const percent = (item.value/Math.max(1,total))*100;
+      const row = document.createElement('div');
+      row.className = 'row';
+      row.dataset.lang = item.lang;
+
+      const label = document.createElement('div');
+      label.className = 'label';
+      label.tabIndex = 0;
+      label.textContent = item.lang;
+      label.addEventListener('click', ()=> showDetails(item.lang));
+      label.addEventListener('keydown', e=> { if(e.key==='Enter') showDetails(item.lang); });
+
+      const barWrap = document.createElement('div');
+      barWrap.className = 'bar-wrap';
+      const bar = document.createElement('div');
+      bar.className = 'bar';
+      const targetWidth = Math.max(6, percent) + '%';
+      bar.style.width = targetWidth;
+      bar.dataset.target = targetWidth;
+      barWrap.appendChild(bar);
+
+      const value = document.createElement('div');
+      value.className = 'value';
+      value.textContent = showPercent ? percent.toFixed(1)+'%' : item.value;
+
+      row.appendChild(label);
+      row.appendChild(barWrap);
+      row.appendChild(value);
+      chart.appendChild(row);
+
+      // table row
+      const tr = document.createElement('tr');
+      const td1 = document.createElement('td');
+      td1.textContent = item.lang;
+      td1.style.cursor = 'pointer';
+      td1.addEventListener('click', ()=> showDetails(item.lang));
+      const td2 = document.createElement('td');
+      td2.textContent = item.value + (showPercent ? ' ('+percent.toFixed(1)+'%)' : '');
+      tr.appendChild(td1); tr.appendChild(td2);
+      tableBody.appendChild(tr);
+
+      uiMap.set(item.lang, {bar, valueEl: value, tableRow: tr, rowEl: row});
+    });
+
+    requestAnimationFrame(()=> {
+      document.querySelectorAll('.row').forEach((r, i) => {
+        setTimeout(()=> r.classList.add('visible'), i * 60);
+      });
+    });
+  }
+
+  // update UI in-place with new numeric values (no DOM rebuild)
+  function syncUI(){
+    const total = totalValue(rows);
+    rows.forEach(item => {
+      const ui = uiMap.get(item.lang);
+      const percent = (item.value/Math.max(1,total))*100;
+      if (ui){
+        const width = Math.max(6, percent) + '%';
+        ui.bar.style.width = width;
+        ui.valueEl.textContent = showPercent ? percent.toFixed(1)+'%' : item.value;
+        const td2 = ui.tableRow.children[1];
+        if (td2) td2.textContent = item.value + (showPercent ? ' ('+percent.toFixed(1)+'%)' : '');
+      }
+    });
+    // update small status timestamp (inject or update element)
+    let status = document.getElementById('lastUpdated');
+    if (!status){
+      status = document.createElement('div');
+      status.id = 'lastUpdated';
+      status.style.marginTop = '8px';
+      status.style.fontSize = '0.9rem';
+      status.style.color = 'var(--muted)';
+      document.querySelector('.aside').appendChild(status);
+    }
+    status.textContent = 'Last updated: ' + new Date().toLocaleString();
+  }
+
+  function showDetails(lang){
+    const item = rows.find(r=>r.lang===lang);
+    if(!item) return;
+    const m = meta[lang] || {};
+    const total = totalValue(rows);
+    detail.style.display = 'block';
+    detail.innerHTML = `<h3 style="margin:0;color:var(--accent)">${lang}</h3>
+      <p style="margin:8px 0 0 0;color:var(--muted)">${m.desc || ''}</p>
+      <p style="margin:6px 0 0 0">Usage: <strong>${item.value}</strong> (${((item.value/Math.max(1,total))*100).toFixed(1)}%)</p>
+      <p style="margin:6px 0 0 0">More: <a href="${m.site||'#'}" target="_blank" rel="noopener">${m.site||'reference'}</a></p>`;
+    detail.scrollIntoView({behavior:'smooth',block:'center'});
+  }
+
+  // Controls
+  sortSelect.addEventListener('change', ()=>{
+    const v = sortSelect.value;
+    if (v === 'usage') rows.sort((a,b)=>b.value - a.value);
+    else rows.sort((a,b)=> a.lang.localeCompare(b.lang));
+    tableBody.innerHTML = '';
+    render(rows);
+  });
+
+  toggleLabels.addEventListener('click', ()=>{
+    showPercent = !showPercent;
+    toggleLabels.textContent = showPercent ? 'Show counts' : 'Show %';
+    syncUI();
+  });
+
+  resetBtn.addEventListener('click', ()=>{
+    rows = data.slice();
+    rows.sort((a,b)=>b.value - a.value);
+    searchInput.value = '';
+    tableBody.innerHTML = '';
+    render(rows);
+  });
+
+  searchInput.addEventListener('input', ()=>{
+    const q = searchInput.value.trim().toLowerCase();
+    if (!q){
+      tableBody.innerHTML = '';
+      render(rows);
+    } else {
+      const filtered = rows.filter(r => r.lang.toLowerCase().includes(q));
+      tableBody.innerHTML = '';
+      render(filtered);
+    }
+  });
+
+  // populate compare selects from current rows (call after render)
+  function populateCompareOptions(){
+    const langs = rows.map(r=>r.lang);
+    function setOptions(sel){
+      sel.innerHTML = '';
+      langs.forEach(l=>{
+        const opt = document.createElement('option');
+        opt.value = l;
+        opt.textContent = l;
+        sel.appendChild(opt);
+      });
+    }
+    setOptions(compareA);
+    setOptions(compareB);
+    // ensure default different values if possible
+    if (compareA.value === compareB.value){
+      for (let i=0;i<langs.length;i++){
+        if (langs[i] !== compareA.value){ compareB.value = langs[i]; break; }
+      }
+    }
+  }
+
+  // compare two languages and show side-by-side details
+  function compareLanguages(a,b){
+    if (!a || !b || a === b){
+      comparePanel.innerHTML = '<div style="color:var(--muted)">Select two different languages to compare.</div>';
+      comparePanel.style.display = 'block';
+      return;
+    }
+    const left = rows.find(r=>r.lang===a);
+    const right = rows.find(r=>r.lang===b);
+    if (!left || !right){
+      comparePanel.innerHTML = '<div style="color:var(--muted)">One of the selected languages is not available.</div>';
+      comparePanel.style.display = 'block';
+      return;
+    }
+    const total = totalValue(rows);
+    const lp = ((left.value/Math.max(1,total))*100).toFixed(1);
+    const rp = ((right.value/Math.max(1,total))*100).toFixed(1);
+
+    // simple diff bar widths normalized to max of the two values
+    const maxVal = Math.max(left.value, right.value, 1);
+    const lw = Math.round((left.value / maxVal) * 100);
+    const rw = Math.round((right.value / maxVal) * 100);
+
+    // generate human-friendly advantage sentences using tags
+    const tagPhrases = {
+      'data-science':'a rich data-science ecosystem (NumPy, pandas, scikit-learn)',
+      'scripting':'excellent for scripting and quick automation',
+      'rapid-prototyping':'fast for prototyping and short development cycles',
+      'beginners':'easy to read and beginner-friendly',
+      'web-backend':'popular for web backends (Django, Flask)',
+      'web':'ubiquitous on the web (runs in browsers)',
+      'frontend':'dominant for front-end web development',
+      'backend':'commonly used for server-side applications (Node.js)',
+      'ubiquity':'very widely available across platforms and environments',
+      'fullstack':'suitable for full-stack development',
+      'enterprise':'strong enterprise ecosystem and tooling',
+      'mobile':'used widely in mobile/Android development',
+      'static-typing':'static typing and strong tooling for large codebases',
+      'performance':'good runtime performance for compute-intensive tasks',
+      'game-dev':'popular in game development tooling (Unity/C++ engines)',
+      'windows':'well integrated into Windows/.NET ecosystem',
+      'low-level':'gives low-level control over memory and hardware',
+      'concurrency':'built-in concurrency primitives and simple concurrency model',
+      'networking':'well-suited for networked services and microservices',
+      'simplicity':'minimal language surface and easy deployment',
+      'cloud':'popular for cloud-native services and tooling',
+      'safety':'focus on memory safety (no data races by design)',
+      'modern-tooling':'modern compiler tooling and package ecosystem',
+      'cms':'commonly used in content management systems and hosted web apps',
+      'legacy':'widely deployed legacy web systems'
+    };
+
+    function advantages(leftMeta, rightMeta){
+      const leftTags = (leftMeta.tags || []);
+      const rightTags = (rightMeta.tags || []);
+      const leftOnly = leftTags.filter(t => !rightTags.includes(t));
+      const rightOnly = rightTags.filter(t => !leftTags.includes(t));
+      const leftSent = leftOnly.slice(0,4).map(t => tagPhrases[t] || t);
+      const rightSent = rightOnly.slice(0,4).map(t => tagPhrases[t] || t);
+      return {leftOnly, rightOnly, leftSent, rightSent};
+    }
+
+    const leftMeta = meta[left.lang] || {};
+    const rightMeta = meta[right.lang] || {};
+    const adv = advantages(leftMeta, rightMeta);
+
+    comparePanel.innerHTML = `
+      <div style="display:flex;gap:12px;align-items:flex-start;">
+        <div style="flex:1">
+          <h4 style="margin:0">${left.lang}</h4>
+          <p style="margin:6px 0 4px 0;color:var(--muted)">${meta[left.lang]?.desc || ''}</p>
+          <div style="background:rgba(0,0,0,0.04);padding:6px;border-radius:8px">
+            <div style="height:16px;background:var(--accent);width:${lw}%;border-radius:6px"></div>
+          </div>
+          <div style="margin-top:6px;font-weight:700">${left.value} — ${lp}%</div>
+        </div>
+
+        <div style="flex:1">
+          <h4 style="margin:0">${right.lang}</h4>
+          <p style="margin:6px 0 4px 0;color:var(--muted)">${meta[right.lang]?.desc || ''}</p>
+          <div style="background:rgba(0,0,0,0.04);padding:6px;border-radius:8px">
+            <div style="height:16px;background:var(--accent);width:${rw}%;border-radius:6px"></div>
+          </div>
+          <div style="margin-top:6px;font-weight:700">${right.value} — ${rp}%</div>
+        </div>
+      </div>
+
+     <hr style="margin:12px 0;border:none;border-top:1px dashed rgba(0,0,0,0.06)">
+
+     <div style="display:flex;gap:16px;align-items:flex-start;">
+       <div style="flex:1">
+         <strong>${left.lang} advantages</strong>
+         <ul style="margin:8px 0 0 16px;color:var(--muted)">
+           ${adv.leftSent.length ? adv.leftSent.map(s => `<li>${s}</li>`).join('') : '<li>None obvious (they overlap)</li>'}
+         </ul>
+       </div>
+       <div style="flex:1">
+         <strong>${right.lang} advantages</strong>
+         <ul style="margin:8px 0 0 16px;color:var(--muted)">
+           ${adv.rightSent.length ? adv.rightSent.map(s => `<li>${s}</li>`).join('') : '<li>None obvious (they overlap)</li>'}
+         </ul>
+       </div>
+     </div>
+
+     <div style="margin-top:12px;color:var(--muted)">
+       <strong>When to choose ${left.lang} over ${right.lang}:</strong>
+       <p style="margin:6px 0 0 0">${adv.leftSent.length ? 'When you need ' + adv.leftSent.slice(0,3).join(', ') + '.' : 'When the project aligns with ' + left.lang + ' strengths.'}</p>
+       <strong style="display:block;margin-top:8px">When to choose ${right.lang} over ${left.lang}:</strong>
+       <p style="margin:6px 0 0 0">${adv.rightSent.length ? 'When you need ' + adv.rightSent.slice(0,3).join(', ') + '.' : 'When the project aligns with ' + right.lang + ' strengths.'}</p>
+     </div>
+
+      <div style="margin-top:10px;color:var(--muted)">Difference: ${Math.abs(left.value - right.value)}</div>
+    `;
+    comparePanel.scrollIntoView({behavior:'smooth', block:'center'});
+    comparePanel.style.display = 'block';
+  }
+
+  // wire compare button
+  compareBtn.addEventListener('click', ()=>{
+    const a = compareA.value;
+    const b = compareB.value;
+    compareLanguages(a,b);
+  });
+
+  // after render, populate compare options
+  const originalRender = render;
+  render = function(list){
+    originalRender(list);
+    populateCompareOptions();
+  };
+
+  // initial render (seed)
+  rows.sort((a,b)=>b.value - a.value);
+  toggleLabels.textContent = 'Show counts';
+  tableBody.innerHTML = '';
+  render(rows);
+})();
+</script>
+</body>
+</html>
